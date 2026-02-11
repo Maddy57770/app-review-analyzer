@@ -1,0 +1,14 @@
+{
+  "name": "app-review-analyzer",
+  "version": "1.0.0",
+  "description": "Analyze Google Play Store and Apple App Store reviews for problems, patterns, and sentiment",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "google-play-scraper": "^9.1.1"
+  }
+}

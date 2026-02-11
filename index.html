@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Analyze Google Play Store and Apple App Store reviews — extract problems, patterns, and sentiment insights instantly.">
+  <title>App Review Analyzer — Sentiment & Problem Detection</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+  <div class="app-container">
+
+    <!-- ─── Header ──────────────────────────────────── -->
+    <header class="app-header">
+      <div class="logo">📊</div>
+      <h1 class="app-title">App Review Analyzer</h1>
+      <p class="app-subtitle">Extract problems, patterns & sentiment from Play Store and App Store reviews</p>
+    </header>
+
+    <!-- ─── Input Section ───────────────────────────── -->
+    <section class="input-section">
+      <div class="input-card">
+
+        <!-- Platform Selector -->
+        <div class="platform-selector">
+          <button class="platform-btn active" data-platform="playstore" id="btn-playstore">
+            <span class="platform-icon">🤖</span> Google Play Store
+          </button>
+          <button class="platform-btn" data-platform="appstore" id="btn-appstore">
+            <span class="platform-icon">🍎</span> Apple App Store
+          </button>
+        </div>
+
+        <!-- URL Input -->
+        <div class="url-input-group">
+          <div class="url-field-wrapper">
+            <span class="url-icon">🔗</span>
+            <input type="url" id="url-input" class="url-input" placeholder="Paste Play Store or App Store URL here..."
+              spellcheck="false" />
+            <button class="btn btn-fetch" id="fetch-btn">
+              <span class="btn-icon">📥</span> Fetch Reviews
+            </button>
+          </div>
+          <div class="url-hint" id="url-hint">
+            Example: https://play.google.com/store/apps/details?id=com.example.app
+          </div>
+        </div>
+
+        <!-- OR Divider -->
+        <div class="or-divider">
+          <span>OR paste reviews manually</span>
+        </div>
+
+        <!-- Textarea -->
+        <div class="textarea-wrapper">
+          <textarea id="review-input" class="review-textarea"
+            placeholder="Paste your app reviews here — one review per line.&#10;&#10;Example:&#10;This app crashes every time I try to open it. Very frustrating!&#10;Amazing app! Love the clean design and fast performance.&#10;Too many ads and the battery drain is terrible."
+            spellcheck="false"></textarea>
+          <span class="review-count" id="review-count">0 reviews detected</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-bar">
+          <button class="btn btn-primary" id="analyze-btn">
+            <span class="btn-icon">🔍</span> Analyze Reviews
+          </button>
+          <button class="btn btn-secondary" id="sample-btn">
+            <span class="btn-icon">📋</span> Load Sample Data
+          </button>
+          <button class="btn btn-secondary" id="clear-btn">
+            <span class="btn-icon">🗑️</span> Clear
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Empty State ─────────────────────────────── -->
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">🔎</div>
+      <p>Paste reviews above and click <strong>Analyze</strong> to uncover insights</p>
+    </div>
+
+    <!-- ─── Results Section ─────────────────────────── -->
+    <section class="results-section hidden" id="results-section">
+
+      <!-- Overview Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Reviews</div>
+          <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Positive</div>
+          <div class="stat-value" id="stat-positive">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Negative</div>
+          <div class="stat-value" id="stat-negative">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">With Problems</div>
+          <div class="stat-value" id="stat-problems">0</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-bar">
+        <button class="tab-btn active" data-tab="problems">
+          <span class="tab-icon">🔍</span> Problems & Patterns
+        </button>
+        <button class="tab-btn" data-tab="sentiment">
+          <span class="tab-icon">💭</span> Sentiment Analysis
+        </button>
+      </div>
+
+      <!-- ─── Problems Panel ────────────────────────── -->
+      <div class="tab-panel active" id="panel-problems">
+        <div class="problems-layout">
+          <div id="problems-list" style="display:contents;"></div>
+
+          <div class="problems-chart-section">
+            <div class="chart-card">
+              <h3>📊 Problem Category Distribution</h3>
+              <div class="chart-wrapper">
+                <canvas id="problems-chart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="recurring-section" id="recurring-phrases"></div>
+        </div>
+      </div>
+
+      <!-- ─── Sentiment Panel ───────────────────────── -->
+      <div class="tab-panel" id="panel-sentiment">
+        <div class="sentiment-layout">
+          <div class="sentiment-overview">
+            <div class="avg-score-card">
+              <div class="label">Average Sentiment Score</div>
+              <div class="avg-score" id="avg-score">0</div>
+            </div>
+            <div class="words-card">
+              <h3>🔤 Most Frequent Sentiment Words</h3>
+              <div class="word-chips" id="top-words"></div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3>🍩 Sentiment Breakdown</h3>
+            <div class="chart-wrapper">
+              <canvas id="sentiment-chart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card" style="grid-column: 1 / -1;">
+            <h3>📈 Score Distribution</h3>
+            <div class="chart-wrapper" style="height:260px;">
+              <canvas id="distribution-chart"></canvas>
+            </div>
+          </div>
+
+          <div class="review-table-card">
+            <h3>📝 All Reviews — Scored</h3>
+            <table class="review-table">
+              <thead>
+                <tr>
+                  <th>Sentiment</th>
+                  <th>Score</th>
+                  <th>Review</th>
+                </tr>
+              </thead>
+              <tbody id="review-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+
+</html>
