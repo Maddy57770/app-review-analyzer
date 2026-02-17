@@ -55,6 +55,7 @@ const SAMPLE_REVIEWS_APPSTORE = [
 ];
 
 // ─── State ─────────────────────────────────────────────
+const REVIEW_DELIMITER = '\n─────\n';
 let currentTab = 'problems';
 let analysisData = null;
 
@@ -117,7 +118,7 @@ function getActivePlatform() {
 function loadSampleData() {
     const platform = getActivePlatform();
     const samples = platform === 'appstore' ? SAMPLE_REVIEWS_APPSTORE : SAMPLE_REVIEWS_PLAYSTORE;
-    $('#review-input').value = samples.join('\n');
+    $('#review-input').value = samples.join(REVIEW_DELIMITER);
     updateReviewCount();
 }
 
@@ -159,7 +160,7 @@ async function fetchFromUrl() {
 
         // Populate textarea
         const reviewTexts = data.reviews.map(r => r.text);
-        $('#review-input').value = reviewTexts.join('\n');
+        $('#review-input').value = reviewTexts.join(REVIEW_DELIMITER);
         updateReviewCount();
 
         showToast(`Fetched ${data.count} reviews from ${data.platform === 'appstore' ? 'App Store' : 'Play Store'}!`, 'success');
@@ -184,7 +185,7 @@ async function fetchFromUrl() {
 
 function updateReviewCount() {
     const text = $('#review-input').value.trim();
-    const count = text ? text.split('\n').filter(l => l.trim()).length : 0;
+    const count = text ? text.split('─────').filter(l => l.trim()).length : 0;
     $('#review-count').textContent = `${count} review${count !== 1 ? 's' : ''} detected`;
 }
 
@@ -202,7 +203,7 @@ function runAnalysis() {
         return;
     }
 
-    const reviews = text.split('\n').filter(l => l.trim()).map(l => l.trim());
+    const reviews = text.split('─────').filter(l => l.trim()).map(l => l.trim());
     if (reviews.length < 2) {
         showToast('Please enter at least 2 reviews for meaningful analysis.', 'warning');
         return;

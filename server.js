@@ -59,7 +59,7 @@ app.get('/api/reviews', async (req, res) => {
             });
 
             reviews = result.data.map(r => ({
-                text: r.text,
+                text: r.text ? r.text.replace(/[\r\n]+/g, ' ').trim() : '',
                 score: r.score,
                 author: r.userName,
                 date: r.date
@@ -91,8 +91,9 @@ app.get('/api/reviews', async (req, res) => {
                         const rating = entry?.['im:rating']?.label;
                         const author = entry?.author?.name?.label;
                         if (content && title !== 'iTunes Store') {
+                            const rawText = title ? `${title} - ${content}` : content;
                             allReviews.push({
-                                text: title ? `${title} - ${content}` : content,
+                                text: rawText.replace(/[\r\n]+/g, ' ').trim(),
                                 score: rating ? parseInt(rating) : null,
                                 author: author || 'Anonymous',
                                 date: null
