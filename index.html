@@ -52,25 +52,38 @@
 
         <!-- Filter Bar -->
         <div class="filter-bar" id="filter-bar">
-          <div class="filter-group">
-            <label for="filter-sort">Sort By</label>
-            <select id="filter-sort" class="filter-select">
-              <option value="newest">🕐 Most Recent</option>
-              <option value="rating">⭐ By Rating</option>
-              <option value="helpfulness">👍 Most Helpful</option>
+          <div class="filter-pill">
+            <span class="filter-pill-icon">🕐</span>
+            <select id="filter-sort" class="pill-select">
+              <option value="newest">Newest</option>
+              <option value="rating">Rating</option>
+              <option value="helpfulness">Most Helpful</option>
             </select>
           </div>
-          <div class="filter-group">
-            <label for="filter-num">Fetch Count</label>
-            <select id="filter-num" class="filter-select">
+          <div class="filter-pill">
+            <span class="filter-pill-icon">⭐</span>
+            <select id="filter-score" class="pill-select">
+              <option value="">Star rating</option>
+              <option value="5">5 Stars</option>
+              <option value="4">4 Stars</option>
+              <option value="3">3 Stars</option>
+              <option value="2">2 Stars</option>
+              <option value="1">1 Star</option>
+            </select>
+          </div>
+          <div class="filter-pill">
+            <span class="filter-pill-icon">📊</span>
+            <select id="filter-num" class="pill-select">
               <option value="50">50 reviews</option>
               <option value="100">100 reviews</option>
               <option value="150" selected>150 reviews</option>
               <option value="200">200 reviews</option>
+              <option value="300">300 reviews</option>
+              <option value="500">500 reviews</option>
             </select>
           </div>
-          <button class="btn btn-secondary btn-load-more" id="load-more-btn" style="display:none;">
-            <span class="btn-icon">📥</span> Load More Reviews
+          <button class="btn btn-load-more" id="load-more-btn" style="display:none;">
+            <span class="btn-icon">📥</span> Load More
           </button>
         </div>
 

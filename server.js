@@ -36,7 +36,7 @@ const SORT_MAP = {
 
 // ─── API: Fetch Reviews ────────────────────────────────
 app.get('/api/reviews', async (req, res) => {
-    const { url, sort = 'newest', num = '150', page = '1' } = req.query;
+    const { url, sort = 'newest', num = '150', page = '1', score = '' } = req.query;
 
     if (!url) {
         return res.status(400).json({ error: 'URL parameter is required' });
@@ -47,9 +47,10 @@ app.get('/api/reviews', async (req, res) => {
         return res.status(400).json({ error: 'Invalid URL. Please provide a Google Play Store or Apple App Store link.' });
     }
 
-    const reviewCount = Math.min(Math.max(parseInt(num) || 150, 10), 200);
+    const reviewCount = Math.min(Math.max(parseInt(num) || 150, 10), 500);
     const pageNum = Math.max(parseInt(page) || 1, 1);
     const sortKey = SORT_MAP[sort] ? sort : 'newest';
+    const scoreFilter = parseInt(score) || 0; // 0 = all ratings
 
     try {
         let reviews = [];
@@ -62,50 +63,59 @@ app.get('/api/reviews', async (req, res) => {
                 return res.status(400).json({ error: 'Could not extract app ID from Play Store URL.' });
             }
 
-            console.log(`Fetching Play Store reviews for: ${appId} (sort=${sortKey}, num=${reviewCount}, page=${pageNum})`);
+            console.log(`Fetching Play Store reviews for: ${appId} (sort=${sortKey}, num=${reviewCount}, page=${pageNum}, score=${scoreFilter})`);
 
-            // Use pagination tokens to get to the requested page
+            // Each paginated batch returns ~150 reviews
+            // Calculate batches needed per "page" to fill the requested count
+            const BATCH_SIZE = 150;
+            const batchesPerPage = Math.ceil(reviewCount / BATCH_SIZE);
+            const batchesToSkip = (pageNum - 1) * batchesPerPage;
+
             let paginationToken = undefined;
-            let currentPage = 1;
 
-            // Navigate to the requested page by iterating through previous pages
-            while (currentPage < pageNum) {
-                const prevResult = await gplay.reviews({
-                    appId: appId,
+            // Skip batches for previous pages
+            for (let i = 0; i < batchesToSkip; i++) {
+                const skipResult = await gplay.reviews({
+                    appId,
                     sort: SORT_MAP[sortKey],
-                    num: reviewCount,
                     lang: 'en',
                     country: 'us',
                     paginate: true,
                     nextPaginationToken: paginationToken
                 });
-                paginationToken = prevResult.nextPaginationToken;
+                paginationToken = skipResult.nextPaginationToken;
                 if (!paginationToken) break;
-                currentPage++;
             }
 
-            // Now fetch the actual page we want
-            const result = await gplay.reviews({
-                appId: appId,
-                sort: SORT_MAP[sortKey],
-                num: reviewCount,
-                lang: 'en',
-                country: 'us',
-                paginate: true,
-                nextPaginationToken: paginationToken
-            });
+            // Fetch enough batches to fill the requested count
+            const allReviews = [];
+            for (let i = 0; i < batchesPerPage && allReviews.length < reviewCount; i++) {
+                const result = await gplay.reviews({
+                    appId,
+                    sort: SORT_MAP[sortKey],
+                    lang: 'en',
+                    country: 'us',
+                    paginate: true,
+                    nextPaginationToken: paginationToken
+                });
 
-            reviews = result.data.map(r => ({
-                text: r.text ? r.text.replace(/[\r\n]+/g, ' ').trim() : '',
-                score: r.score,
-                author: r.userName,
-                date: r.date
-            }));
+                for (const r of result.data) {
+                    if (allReviews.length >= reviewCount) break;
+                    allReviews.push({
+                        text: r.text ? r.text.replace(/[\r\n]+/g, ' ').trim() : '',
+                        score: r.score,
+                        author: r.userName,
+                        date: r.date
+                    });
+                }
 
-            if (result.nextPaginationToken) {
-                hasMore = true;
-                nextPage = pageNum + 1;
+                paginationToken = result.nextPaginationToken;
+                if (!paginationToken) break;
             }
+
+            reviews = allReviews;
+            hasMore = !!paginationToken;
+            if (hasMore) nextPage = pageNum + 1;
 
         } else if (platform === 'appstore') {
             const appId = parseAppStoreId(url);
@@ -121,7 +131,7 @@ app.get('/api/reviews', async (req, res) => {
             const startPage = ((pageNum - 1) * pagesNeeded) + 1;
             const endPage = Math.min(startPage + pagesNeeded - 1, 10);
 
-            console.log(`Fetching App Store reviews for ID: ${appId} (sort=${rssSortBy}, pages ${startPage}-${endPage}, page=${pageNum})`);
+            console.log(`Fetching App Store reviews for ID: ${appId} (sort=${rssSortBy}, pages ${startPage}-${endPage}, page=${pageNum}, score=${scoreFilter})`);
 
             if (startPage > 10) {
                 return res.json({ platform, count: 0, reviews: [], hasMore: false, nextPage: null });
@@ -165,6 +175,11 @@ app.get('/api/reviews', async (req, res) => {
                 hasMore = true;
                 nextPage = pageNum + 1;
             }
+        }
+
+        // Apply star rating filter if specified
+        if (scoreFilter >= 1 && scoreFilter <= 5) {
+            reviews = reviews.filter(r => r.score === scoreFilter);
         }
 
         if (reviews.length === 0) {

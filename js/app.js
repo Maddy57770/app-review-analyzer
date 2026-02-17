@@ -152,6 +152,7 @@ async function fetchFromUrl(loadMore = false) {
     // Get filter values
     const sort = $('#filter-sort').value;
     const num = $('#filter-num').value;
+    const score = $('#filter-score').value;
 
     // Show loading
     const activeBtn = loadMore ? $('#load-more-btn') : $('#fetch-btn');
@@ -161,7 +162,7 @@ async function fetchFromUrl(loadMore = false) {
     $('#url-hint').classList.add('fetching');
 
     try {
-        const apiUrl = `/api/reviews?url=${encodeURIComponent(url)}&sort=${sort}&num=${num}&page=${currentPage}`;
+        const apiUrl = `/api/reviews?url=${encodeURIComponent(url)}&sort=${sort}&num=${num}&page=${currentPage}&score=${score}`;
         const response = await fetch(apiUrl);
         const data = await response.json();
 
