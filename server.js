@@ -27,9 +27,16 @@ function detectPlatform(url) {
     return null;
 }
 
+// ─── Sort Mapping ──────────────────────────────────────
+const SORT_MAP = {
+    newest: gplay.sort.NEWEST,
+    rating: gplay.sort.RATING,
+    helpfulness: gplay.sort.HELPFULNESS
+};
+
 // ─── API: Fetch Reviews ────────────────────────────────
 app.get('/api/reviews', async (req, res) => {
-    const { url } = req.query;
+    const { url, sort = 'newest', num = '150', page = '1' } = req.query;
 
     if (!url) {
         return res.status(400).json({ error: 'URL parameter is required' });
@@ -40,8 +47,14 @@ app.get('/api/reviews', async (req, res) => {
         return res.status(400).json({ error: 'Invalid URL. Please provide a Google Play Store or Apple App Store link.' });
     }
 
+    const reviewCount = Math.min(Math.max(parseInt(num) || 150, 10), 200);
+    const pageNum = Math.max(parseInt(page) || 1, 1);
+    const sortKey = SORT_MAP[sort] ? sort : 'newest';
+
     try {
         let reviews = [];
+        let hasMore = false;
+        let nextPage = null;
 
         if (platform === 'playstore') {
             const appId = parsePlayStoreId(url);
@@ -49,13 +62,37 @@ app.get('/api/reviews', async (req, res) => {
                 return res.status(400).json({ error: 'Could not extract app ID from Play Store URL.' });
             }
 
-            console.log(`Fetching Play Store reviews for: ${appId}`);
+            console.log(`Fetching Play Store reviews for: ${appId} (sort=${sortKey}, num=${reviewCount}, page=${pageNum})`);
+
+            // Use pagination tokens to get to the requested page
+            let paginationToken = undefined;
+            let currentPage = 1;
+
+            // Navigate to the requested page by iterating through previous pages
+            while (currentPage < pageNum) {
+                const prevResult = await gplay.reviews({
+                    appId: appId,
+                    sort: SORT_MAP[sortKey],
+                    num: reviewCount,
+                    lang: 'en',
+                    country: 'us',
+                    paginate: true,
+                    nextPaginationToken: paginationToken
+                });
+                paginationToken = prevResult.nextPaginationToken;
+                if (!paginationToken) break;
+                currentPage++;
+            }
+
+            // Now fetch the actual page we want
             const result = await gplay.reviews({
                 appId: appId,
-                sort: gplay.sort.NEWEST,
-                num: 150,
+                sort: SORT_MAP[sortKey],
+                num: reviewCount,
                 lang: 'en',
-                country: 'us'
+                country: 'us',
+                paginate: true,
+                nextPaginationToken: paginationToken
             });
 
             reviews = result.data.map(r => ({
@@ -65,19 +102,35 @@ app.get('/api/reviews', async (req, res) => {
                 date: r.date
             }));
 
+            if (result.nextPaginationToken) {
+                hasMore = true;
+                nextPage = pageNum + 1;
+            }
+
         } else if (platform === 'appstore') {
             const appId = parseAppStoreId(url);
             if (!appId) {
                 return res.status(400).json({ error: 'Could not extract app ID from App Store URL.' });
             }
 
-            console.log(`Fetching App Store reviews for ID: ${appId}`);
+            // Map sort param to RSS feed sort
+            const rssSortBy = (sortKey === 'helpfulness') ? 'mosthelpful' : 'mostrecent';
 
-            // Fetch multiple pages from iTunes RSS feed
+            // Calculate how many RSS pages we need (each RSS page has ~50 reviews)
+            const pagesNeeded = Math.ceil(reviewCount / 50);
+            const startPage = ((pageNum - 1) * pagesNeeded) + 1;
+            const endPage = Math.min(startPage + pagesNeeded - 1, 10);
+
+            console.log(`Fetching App Store reviews for ID: ${appId} (sort=${rssSortBy}, pages ${startPage}-${endPage}, page=${pageNum})`);
+
+            if (startPage > 10) {
+                return res.json({ platform, count: 0, reviews: [], hasMore: false, nextPage: null });
+            }
+
             const allReviews = [];
-            for (let page = 1; page <= 5; page++) {
+            for (let p = startPage; p <= endPage; p++) {
                 try {
-                    const feedUrl = `https://itunes.apple.com/us/rss/customerreviews/page=${page}/id=${appId}/sortby=mostrecent/json`;
+                    const feedUrl = `https://itunes.apple.com/us/rss/customerreviews/page=${p}/id=${appId}/sortby=${rssSortBy}/json`;
                     const response = await fetch(feedUrl);
                     if (!response.ok) break;
 
@@ -105,6 +158,13 @@ app.get('/api/reviews', async (req, res) => {
                 }
             }
             reviews = allReviews;
+
+            // Check if there are more pages available
+            const nextStartPage = endPage + 1;
+            if (nextStartPage <= 10) {
+                hasMore = true;
+                nextPage = pageNum + 1;
+            }
         }
 
         if (reviews.length === 0) {
@@ -112,7 +172,7 @@ app.get('/api/reviews', async (req, res) => {
         }
 
         console.log(`Fetched ${reviews.length} reviews successfully.`);
-        res.json({ platform, count: reviews.length, reviews });
+        res.json({ platform, count: reviews.length, reviews, hasMore, nextPage });
 
     } catch (err) {
         console.error('Error fetching reviews:', err.message);

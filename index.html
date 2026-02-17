@@ -50,6 +50,30 @@
           </div>
         </div>
 
+        <!-- Filter Bar -->
+        <div class="filter-bar" id="filter-bar">
+          <div class="filter-group">
+            <label for="filter-sort">Sort By</label>
+            <select id="filter-sort" class="filter-select">
+              <option value="newest">🕐 Most Recent</option>
+              <option value="rating">⭐ By Rating</option>
+              <option value="helpfulness">👍 Most Helpful</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filter-num">Fetch Count</label>
+            <select id="filter-num" class="filter-select">
+              <option value="50">50 reviews</option>
+              <option value="100">100 reviews</option>
+              <option value="150" selected>150 reviews</option>
+              <option value="200">200 reviews</option>
+            </select>
+          </div>
+          <button class="btn btn-secondary btn-load-more" id="load-more-btn" style="display:none;">
+            <span class="btn-icon">📥</span> Load More Reviews
+          </button>
+        </div>
+
         <!-- OR Divider -->
         <div class="or-divider">
           <span>OR paste reviews manually</span>

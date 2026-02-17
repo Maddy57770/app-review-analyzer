@@ -58,6 +58,9 @@ const SAMPLE_REVIEWS_APPSTORE = [
 const REVIEW_DELIMITER = '\n─────\n';
 let currentTab = 'problems';
 let analysisData = null;
+let currentPage = 1;
+let lastFetchUrl = '';
+let hasMoreReviews = false;
 
 // ─── DOM Elements ──────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
@@ -88,11 +91,14 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#sample-btn').addEventListener('click', loadSampleData);
 
     // Fetch from URL button
-    $('#fetch-btn').addEventListener('click', fetchFromUrl);
+    $('#fetch-btn').addEventListener('click', () => fetchFromUrl(false));
+
+    // Load More button
+    $('#load-more-btn').addEventListener('click', () => fetchFromUrl(true));
 
     // Allow Enter key in URL input
     $('#url-input').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') fetchFromUrl();
+        if (e.key === 'Enter') fetchFromUrl(false);
     });
 
     // Clear button
@@ -123,7 +129,7 @@ function loadSampleData() {
 }
 
 // ─── Fetch from URL ────────────────────────────────────
-async function fetchFromUrl() {
+async function fetchFromUrl(loadMore = false) {
     const url = $('#url-input').value.trim();
     if (!url) {
         showToast('Please paste a Play Store or App Store URL.', 'warning');
@@ -135,15 +141,28 @@ async function fetchFromUrl() {
         return;
     }
 
+    // If loading more, increment page; otherwise reset
+    if (loadMore && hasMoreReviews) {
+        currentPage++;
+    } else {
+        currentPage = 1;
+    }
+    lastFetchUrl = url;
+
+    // Get filter values
+    const sort = $('#filter-sort').value;
+    const num = $('#filter-num').value;
+
     // Show loading
-    const fetchBtn = $('#fetch-btn');
-    fetchBtn.classList.add('loading');
-    fetchBtn.innerHTML = '<span class="spinner"></span> Fetching...';
-    $('#url-hint').textContent = 'Connecting to store and fetching reviews...';
+    const activeBtn = loadMore ? $('#load-more-btn') : $('#fetch-btn');
+    activeBtn.classList.add('loading');
+    activeBtn.innerHTML = '<span class="spinner"></span> Fetching...';
+    $('#url-hint').textContent = loadMore ? 'Loading more reviews...' : 'Connecting to store and fetching reviews...';
     $('#url-hint').classList.add('fetching');
 
     try {
-        const response = await fetch(`/api/reviews?url=${encodeURIComponent(url)}`);
+        const apiUrl = `/api/reviews?url=${encodeURIComponent(url)}&sort=${sort}&num=${num}&page=${currentPage}`;
+        const response = await fetch(apiUrl);
         const data = await response.json();
 
         if (!response.ok) {
@@ -158,13 +177,24 @@ async function fetchFromUrl() {
         $$('.platform-btn').forEach(b => b.classList.remove('active'));
         $(platformBtn).classList.add('active');
 
-        // Populate textarea
+        // Populate textarea (append if loading more)
         const reviewTexts = data.reviews.map(r => r.text);
-        $('#review-input').value = reviewTexts.join(REVIEW_DELIMITER);
+        if (loadMore && $('#review-input').value.trim()) {
+            $('#review-input').value += REVIEW_DELIMITER + reviewTexts.join(REVIEW_DELIMITER);
+        } else {
+            $('#review-input').value = reviewTexts.join(REVIEW_DELIMITER);
+        }
         updateReviewCount();
 
-        showToast(`Fetched ${data.count} reviews from ${data.platform === 'appstore' ? 'App Store' : 'Play Store'}!`, 'success');
-        $('#url-hint').textContent = `✅ Fetched ${data.count} reviews. Click "Analyze Reviews" to see insights.`;
+        // Update pagination state
+        hasMoreReviews = data.hasMore;
+        const loadMoreBtn = $('#load-more-btn');
+        loadMoreBtn.style.display = hasMoreReviews ? 'inline-flex' : 'none';
+
+        const totalCount = $('#review-input').value.split('─────').filter(l => l.trim()).length;
+        const action = loadMore ? `Loaded ${data.count} more reviews` : `Fetched ${data.count} reviews`;
+        showToast(`${action} from ${data.platform === 'appstore' ? 'App Store' : 'Play Store'}! (${totalCount} total)`, 'success');
+        $('#url-hint').textContent = `✅ ${totalCount} reviews loaded. ${hasMoreReviews ? 'Click "Load More" for additional reviews. ' : ''}Click "Analyze Reviews" to see insights.`;
         $('#url-hint').classList.remove('error');
         $('#url-hint').classList.add('success');
 
@@ -174,8 +204,11 @@ async function fetchFromUrl() {
         $('#url-hint').textContent = '❌ Connection failed. Is the server running?';
         $('#url-hint').classList.add('error');
     } finally {
-        fetchBtn.classList.remove('loading');
-        fetchBtn.innerHTML = '<span class="btn-icon">📥</span> Fetch Reviews';
+        // Restore both buttons
+        $('#fetch-btn').classList.remove('loading');
+        $('#fetch-btn').innerHTML = '<span class="btn-icon">📥</span> Fetch Reviews';
+        $('#load-more-btn').classList.remove('loading');
+        $('#load-more-btn').innerHTML = '<span class="btn-icon">📥</span> Load More Reviews';
         setTimeout(() => {
             $('#url-hint').classList.remove('fetching', 'success', 'error');
             $('#url-hint').textContent = 'Example: https://play.google.com/store/apps/details?id=com.example.app';
