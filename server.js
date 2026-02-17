@@ -177,16 +177,24 @@ app.get('/api/reviews', async (req, res) => {
             }
         }
 
-        // Apply star rating filter if specified
-        if (scoreFilter >= 1 && scoreFilter <= 5) {
-            reviews = reviews.filter(r => r.score === scoreFilter);
-        }
-
+        // Check if we got any reviews from the store
         if (reviews.length === 0) {
             return res.status(404).json({ error: 'No reviews found for this app. The app may have no reviews, or the URL might be incorrect.' });
         }
 
-        console.log(`Fetched ${reviews.length} reviews successfully.`);
+        // Apply star rating filter if specified
+        const unfilteredCount = reviews.length;
+        if (scoreFilter >= 1 && scoreFilter <= 5) {
+            reviews = reviews.filter(r => r.score === scoreFilter);
+        }
+
+        // If score filter removed all reviews, return gracefully (not a 404)
+        if (reviews.length === 0) {
+            console.log(`Fetched ${unfilteredCount} reviews but none matched ${scoreFilter}-star filter.`);
+            return res.json({ platform, count: 0, reviews: [], hasMore, nextPage, message: `No ${scoreFilter}-star reviews found in this batch. Try loading more or changing the filter.` });
+        }
+
+        console.log(`Fetched ${reviews.length} reviews successfully${scoreFilter ? ` (filtered to ${scoreFilter}-star from ${unfilteredCount})` : ''}.`);
         res.json({ platform, count: reviews.length, reviews, hasMore, nextPage });
 
     } catch (err) {

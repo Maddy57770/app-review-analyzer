@@ -178,6 +178,20 @@ async function fetchFromUrl(loadMore = false) {
         $$('.platform-btn').forEach(b => b.classList.remove('active'));
         $(platformBtn).classList.add('active');
 
+        // Handle empty filtered results (e.g. no reviews match star filter)
+        if (data.count === 0) {
+            const msg = data.message || 'No reviews matched the selected filters.';
+            showToast(msg, 'warning');
+            $('#url-hint').textContent = `⚠️ ${msg}`;
+            $('#url-hint').classList.add('error');
+
+            // Still update pagination state
+            hasMoreReviews = data.hasMore;
+            const loadMoreBtn = $('#load-more-btn');
+            loadMoreBtn.style.display = hasMoreReviews ? 'inline-flex' : 'none';
+            return;
+        }
+
         // Populate textarea (append if loading more)
         const reviewTexts = data.reviews.map(r => r.text);
         if (loadMore && $('#review-input').value.trim()) {

@@ -53,11 +53,20 @@
         <!-- Filter Bar -->
         <div class="filter-bar" id="filter-bar">
           <div class="filter-pill">
-            <span class="filter-pill-icon">🕐</span>
+            <span class="filter-pill-icon">📱</span>
+            <select id="filter-device" class="pill-select">
+              <option value="phone">Phone</option>
+              <option value="watch">Watch</option>
+              <option value="chromebook">Chromebook</option>
+              <option value="tablet">Tablet</option>
+            </select>
+          </div>
+          <div class="filter-pill">
+            <span class="filter-pill-icon">🔽</span>
             <select id="filter-sort" class="pill-select">
+              <option value="helpfulness">Most relevant</option>
               <option value="newest">Newest</option>
               <option value="rating">Rating</option>
-              <option value="helpfulness">Most Helpful</option>
             </select>
           </div>
           <div class="filter-pill">
