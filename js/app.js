@@ -61,6 +61,7 @@ let analysisData = null;
 let currentPage = 1;
 let lastFetchUrl = '';
 let hasMoreReviews = false;
+let fetchedReviews = []; // Store full review data for client-side filtering
 
 // ─── DOM Elements ──────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
@@ -107,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#url-input').value = '';
         $('#results-section').classList.add('hidden');
         $('#empty-state').classList.remove('hidden');
+        fetchedReviews = [];
         updateReviewCount();
     });
 
@@ -115,7 +117,92 @@ document.addEventListener('DOMContentLoaded', () => {
     textarea.addEventListener('input', () => {
         updateReviewCount();
     });
+
+    // ─── Custom Dropdowns ───────────────────────────────
+    initCustomDropdowns();
+
+    // ─── Theme Toggle ──────────────────────────────────
+    initThemeToggle();
 });
+
+// ─── Custom Dropdowns ──────────────────────────────────
+function initCustomDropdowns() {
+    $$('.custom-dropdown').forEach(dd => {
+        const pill = dd.querySelector('.dropdown-pill');
+        const menu = dd.querySelector('.dropdown-menu');
+        const items = dd.querySelectorAll('.dropdown-menu li');
+
+        pill.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Close other dropdowns
+            $$('.custom-dropdown.open').forEach(other => {
+                if (other !== dd) other.classList.remove('open');
+            });
+            dd.classList.toggle('open');
+        });
+
+        items.forEach(item => {
+            item.addEventListener('click', () => {
+                const value = item.dataset.value;
+                const label = item.textContent.replace('✓ ', '');
+                dd.dataset.value = value;
+                dd.querySelector('.pill-label').textContent = label;
+                items.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                dd.classList.remove('open');
+
+                // If star filter changed, re-filter reviews client-side
+                if (dd.id === 'dd-score') {
+                    applyStarFilter();
+                }
+            });
+        });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', () => {
+        $$('.custom-dropdown.open').forEach(dd => dd.classList.remove('open'));
+    });
+}
+
+// ─── Theme Toggle ──────────────────────────────────────
+function initThemeToggle() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        $('#theme-icon').textContent = '☀️';
+    }
+
+    $('#theme-toggle').addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        if (current === 'light') {
+            document.documentElement.removeAttribute('data-theme');
+            $('#theme-icon').textContent = '🌙';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            $('#theme-icon').textContent = '☀️';
+            localStorage.setItem('theme', 'light');
+        }
+    });
+}
+
+// ─── Apply Star Filter (client-side) ───────────────────
+function applyStarFilter() {
+    const scoreFilter = parseInt($('#dd-score').dataset.value) || 0;
+    let filtered = fetchedReviews;
+    if (scoreFilter >= 1 && scoreFilter <= 5) {
+        filtered = fetchedReviews.filter(r => r.score === scoreFilter);
+    }
+
+    if (filtered.length === 0 && fetchedReviews.length > 0) {
+        showToast(`No ${scoreFilter}-star reviews in the current batch. Try loading more reviews.`, 'warning');
+    }
+
+    const reviewTexts = filtered.map(r => r.text);
+    $('#review-input').value = reviewTexts.join(REVIEW_DELIMITER);
+    updateReviewCount();
+}
 
 function getActivePlatform() {
     return $('.platform-btn.active')?.dataset.platform || 'playstore';
@@ -146,13 +233,13 @@ async function fetchFromUrl(loadMore = false) {
         currentPage++;
     } else {
         currentPage = 1;
+        fetchedReviews = [];
     }
     lastFetchUrl = url;
 
-    // Get filter values
-    const sort = $('#filter-sort').value;
-    const num = $('#filter-num').value;
-    const score = $('#filter-score').value;
+    // Get filter values from custom dropdowns
+    const sort = $('#dd-sort').dataset.value;
+    const num = $('#dd-num').dataset.value;
 
     // Show loading
     const activeBtn = loadMore ? $('#load-more-btn') : $('#fetch-btn');
@@ -162,7 +249,7 @@ async function fetchFromUrl(loadMore = false) {
     $('#url-hint').classList.add('fetching');
 
     try {
-        const apiUrl = `/api/reviews?url=${encodeURIComponent(url)}&sort=${sort}&num=${num}&page=${currentPage}&score=${score}`;
+        const apiUrl = `/api/reviews?url=${encodeURIComponent(url)}&sort=${sort}&num=${num}&page=${currentPage}`;
         const response = await fetch(apiUrl);
         const data = await response.json();
 
@@ -178,27 +265,23 @@ async function fetchFromUrl(loadMore = false) {
         $$('.platform-btn').forEach(b => b.classList.remove('active'));
         $(platformBtn).classList.add('active');
 
-        // Handle empty filtered results (e.g. no reviews match star filter)
-        if (data.count === 0) {
-            const msg = data.message || 'No reviews matched the selected filters.';
-            showToast(msg, 'warning');
-            $('#url-hint').textContent = `⚠️ ${msg}`;
-            $('#url-hint').classList.add('error');
-
-            // Still update pagination state
-            hasMoreReviews = data.hasMore;
-            const loadMoreBtn = $('#load-more-btn');
-            loadMoreBtn.style.display = hasMoreReviews ? 'inline-flex' : 'none';
-            return;
-        }
-
-        // Populate textarea (append if loading more)
-        const reviewTexts = data.reviews.map(r => r.text);
-        if (loadMore && $('#review-input').value.trim()) {
-            $('#review-input').value += REVIEW_DELIMITER + reviewTexts.join(REVIEW_DELIMITER);
+        // Store fetched reviews (with scores for client-side filtering)
+        if (loadMore) {
+            fetchedReviews = fetchedReviews.concat(data.reviews);
         } else {
-            $('#review-input').value = reviewTexts.join(REVIEW_DELIMITER);
+            fetchedReviews = data.reviews;
         }
+
+        // Apply client-side star filter
+        const scoreFilter = parseInt($('#dd-score').dataset.value) || 0;
+        let displayReviews = fetchedReviews;
+        if (scoreFilter >= 1 && scoreFilter <= 5) {
+            displayReviews = fetchedReviews.filter(r => r.score === scoreFilter);
+        }
+
+        // Populate textarea
+        const reviewTexts = displayReviews.map(r => r.text);
+        $('#review-input').value = reviewTexts.join(REVIEW_DELIMITER);
         updateReviewCount();
 
         // Update pagination state
@@ -206,10 +289,12 @@ async function fetchFromUrl(loadMore = false) {
         const loadMoreBtn = $('#load-more-btn');
         loadMoreBtn.style.display = hasMoreReviews ? 'inline-flex' : 'none';
 
-        const totalCount = $('#review-input').value.split('─────').filter(l => l.trim()).length;
+        const totalFetched = fetchedReviews.length;
+        const displayed = displayReviews.length;
         const action = loadMore ? `Loaded ${data.count} more reviews` : `Fetched ${data.count} reviews`;
-        showToast(`${action} from ${data.platform === 'appstore' ? 'App Store' : 'Play Store'}! (${totalCount} total)`, 'success');
-        $('#url-hint').textContent = `✅ ${totalCount} reviews loaded. ${hasMoreReviews ? 'Click "Load More" for additional reviews. ' : ''}Click "Analyze Reviews" to see insights.`;
+        const filterNote = scoreFilter ? ` (showing ${displayed} ${scoreFilter}-star)` : '';
+        showToast(`${action} from ${data.platform === 'appstore' ? 'App Store' : 'Play Store'}! (${totalFetched} total${filterNote})`, 'success');
+        $('#url-hint').textContent = `✅ ${totalFetched} reviews loaded${filterNote}. ${hasMoreReviews ? 'Click "Load More" for more. ' : ''}Click "Analyze Reviews" to see insights.`;
         $('#url-hint').classList.remove('error');
         $('#url-hint').classList.add('success');
 

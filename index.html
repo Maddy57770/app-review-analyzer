@@ -19,6 +19,9 @@
       <div class="logo">📊</div>
       <h1 class="app-title">App Review Analyzer</h1>
       <p class="app-subtitle">Extract problems, patterns & sentiment from Play Store and App Store reviews</p>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">
+        <span class="theme-icon" id="theme-icon">🌙</span>
+      </button>
     </header>
 
     <!-- ─── Input Section ───────────────────────────── -->
@@ -52,44 +55,44 @@
 
         <!-- Filter Bar -->
         <div class="filter-bar" id="filter-bar">
-          <div class="filter-pill">
-            <span class="filter-pill-icon">📱</span>
-            <select id="filter-device" class="pill-select">
-              <option value="phone">Phone</option>
-              <option value="watch">Watch</option>
-              <option value="chromebook">Chromebook</option>
-              <option value="tablet">Tablet</option>
-            </select>
+          <div class="custom-dropdown" id="dd-sort" data-value="helpfulness">
+            <button class="dropdown-pill" type="button">
+              <span class="pill-label">Most relevant</span>
+              <span class="pill-arrow">▾</span>
+            </button>
+            <ul class="dropdown-menu">
+              <li data-value="helpfulness" class="active">Most relevant</li>
+              <li data-value="newest">Newest</li>
+              <li data-value="rating">Rating</li>
+            </ul>
           </div>
-          <div class="filter-pill">
-            <span class="filter-pill-icon">🔽</span>
-            <select id="filter-sort" class="pill-select">
-              <option value="helpfulness">Most relevant</option>
-              <option value="newest">Newest</option>
-              <option value="rating">Rating</option>
-            </select>
+          <div class="custom-dropdown" id="dd-score" data-value="">
+            <button class="dropdown-pill" type="button">
+              <span class="pill-label">Star rating</span>
+              <span class="pill-arrow">▾</span>
+            </button>
+            <ul class="dropdown-menu">
+              <li data-value="" class="active">All ratings</li>
+              <li data-value="5">⭐ 5 Stars</li>
+              <li data-value="4">⭐ 4 Stars</li>
+              <li data-value="3">⭐ 3 Stars</li>
+              <li data-value="2">⭐ 2 Stars</li>
+              <li data-value="1">⭐ 1 Star</li>
+            </ul>
           </div>
-          <div class="filter-pill">
-            <span class="filter-pill-icon">⭐</span>
-            <select id="filter-score" class="pill-select">
-              <option value="">Star rating</option>
-              <option value="5">5 Stars</option>
-              <option value="4">4 Stars</option>
-              <option value="3">3 Stars</option>
-              <option value="2">2 Stars</option>
-              <option value="1">1 Star</option>
-            </select>
-          </div>
-          <div class="filter-pill">
-            <span class="filter-pill-icon">📊</span>
-            <select id="filter-num" class="pill-select">
-              <option value="50">50 reviews</option>
-              <option value="100">100 reviews</option>
-              <option value="150" selected>150 reviews</option>
-              <option value="200">200 reviews</option>
-              <option value="300">300 reviews</option>
-              <option value="500">500 reviews</option>
-            </select>
+          <div class="custom-dropdown" id="dd-num" data-value="150">
+            <button class="dropdown-pill" type="button">
+              <span class="pill-label">150 reviews</span>
+              <span class="pill-arrow">▾</span>
+            </button>
+            <ul class="dropdown-menu">
+              <li data-value="50">50 reviews</li>
+              <li data-value="100">100 reviews</li>
+              <li data-value="150" class="active">150 reviews</li>
+              <li data-value="200">200 reviews</li>
+              <li data-value="300">300 reviews</li>
+              <li data-value="500">500 reviews</li>
+            </ul>
           </div>
           <button class="btn btn-load-more" id="load-more-btn" style="display:none;">
             <span class="btn-icon">📥</span> Load More
