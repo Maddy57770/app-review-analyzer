@@ -170,18 +170,18 @@ function initThemeToggle() {
     const saved = localStorage.getItem('theme');
     if (saved === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
-        $('#theme-icon').textContent = '☀️';
+        $('#theme-icon').textContent = 'light_mode';
     }
 
     $('#theme-toggle').addEventListener('click', () => {
         const current = document.documentElement.getAttribute('data-theme');
         if (current === 'light') {
             document.documentElement.removeAttribute('data-theme');
-            $('#theme-icon').textContent = '🌙';
+            $('#theme-icon').textContent = 'dark_mode';
             localStorage.setItem('theme', 'dark');
         } else {
             document.documentElement.setAttribute('data-theme', 'light');
-            $('#theme-icon').textContent = '☀️';
+            $('#theme-icon').textContent = 'light_mode';
             localStorage.setItem('theme', 'light');
         }
     });
@@ -306,9 +306,9 @@ async function fetchFromUrl(loadMore = false) {
     } finally {
         // Restore both buttons
         $('#fetch-btn').classList.remove('loading');
-        $('#fetch-btn').innerHTML = '<span class="btn-icon">📥</span> Fetch Reviews';
+        $('#fetch-btn').innerHTML = '<span class="material-symbols-rounded btn-icon">download</span> Fetch Reviews';
         $('#load-more-btn').classList.remove('loading');
-        $('#load-more-btn').innerHTML = '<span class="btn-icon">📥</span> Load More Reviews';
+        $('#load-more-btn').innerHTML = '<span class="material-symbols-rounded btn-icon">refresh</span> Load More Reviews';
         setTimeout(() => {
             $('#url-hint').classList.remove('fetching', 'success', 'error');
             $('#url-hint').textContent = 'Example: https://play.google.com/store/apps/details?id=com.example.app';
@@ -364,7 +364,7 @@ function runAnalysis() {
             showToast('An error occurred during analysis. Please try again.', 'error');
         } finally {
             $('#analyze-btn').classList.remove('loading');
-            $('#analyze-btn').innerHTML = '<span class="btn-icon">🔍</span> Analyze Reviews';
+            $('#analyze-btn').innerHTML = '<span class="material-symbols-rounded btn-icon">search</span> Analyze Reviews';
         }
     }, 600);
 }

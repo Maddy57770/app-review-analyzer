@@ -7,7 +7,10 @@
   <meta name="description"
     content="Analyze Google Play Store and Apple App Store reviews — extract problems, patterns, and sentiment insights instantly.">
   <title>App Review Analyzer — Sentiment & Problem Detection</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
@@ -16,11 +19,11 @@
 
     <!-- ─── Header ──────────────────────────────────── -->
     <header class="app-header">
-      <div class="logo">📊</div>
+      <div class="logo"><span class="material-symbols-rounded" style="font-size:2rem">analytics</span></div>
       <h1 class="app-title">App Review Analyzer</h1>
       <p class="app-subtitle">Extract problems, patterns & sentiment from Play Store and App Store reviews</p>
       <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">
-        <span class="theme-icon" id="theme-icon">🌙</span>
+        <span class="material-symbols-rounded theme-icon" id="theme-icon">dark_mode</span>
       </button>
     </header>
 
@@ -31,21 +34,21 @@
         <!-- Platform Selector -->
         <div class="platform-selector">
           <button class="platform-btn active" data-platform="playstore" id="btn-playstore">
-            <span class="platform-icon">🤖</span> Google Play Store
+            <span class="material-symbols-rounded platform-icon">shop</span> Google Play Store
           </button>
           <button class="platform-btn" data-platform="appstore" id="btn-appstore">
-            <span class="platform-icon">🍎</span> Apple App Store
+            <span class="material-symbols-rounded platform-icon">phone_iphone</span> Apple App Store
           </button>
         </div>
 
         <!-- URL Input -->
         <div class="url-input-group">
           <div class="url-field-wrapper">
-            <span class="url-icon">🔗</span>
+            <span class="material-symbols-rounded url-icon">link</span>
             <input type="url" id="url-input" class="url-input" placeholder="Paste Play Store or App Store URL here..."
               spellcheck="false" />
             <button class="btn btn-fetch" id="fetch-btn">
-              <span class="btn-icon">📥</span> Fetch Reviews
+              <span class="material-symbols-rounded btn-icon">download</span> Fetch Reviews
             </button>
           </div>
           <div class="url-hint" id="url-hint">
@@ -55,10 +58,12 @@
 
         <!-- Filter Bar -->
         <div class="filter-bar" id="filter-bar">
+
           <div class="custom-dropdown" id="dd-sort" data-value="helpfulness">
             <button class="dropdown-pill" type="button">
+              <span class="material-symbols-rounded pill-icon">sort</span>
               <span class="pill-label">Most relevant</span>
-              <span class="pill-arrow">▾</span>
+              <span class="material-symbols-rounded pill-arrow">expand_more</span>
             </button>
             <ul class="dropdown-menu">
               <li data-value="helpfulness" class="active">Most relevant</li>
@@ -68,22 +73,24 @@
           </div>
           <div class="custom-dropdown" id="dd-score" data-value="">
             <button class="dropdown-pill" type="button">
-              <span class="pill-label">Star rating</span>
-              <span class="pill-arrow">▾</span>
+              <span class="material-symbols-rounded pill-icon">star</span>
+              <span class="pill-label">All ratings</span>
+              <span class="material-symbols-rounded pill-arrow">expand_more</span>
             </button>
             <ul class="dropdown-menu">
               <li data-value="" class="active">All ratings</li>
-              <li data-value="5">⭐ 5 Stars</li>
-              <li data-value="4">⭐ 4 Stars</li>
-              <li data-value="3">⭐ 3 Stars</li>
-              <li data-value="2">⭐ 2 Stars</li>
-              <li data-value="1">⭐ 1 Star</li>
+              <li data-value="5"><span class="material-symbols-rounded">star</span> 5 Stars</li>
+              <li data-value="4"><span class="material-symbols-rounded">star</span> 4 Stars</li>
+              <li data-value="3"><span class="material-symbols-rounded">star</span> 3 Stars</li>
+              <li data-value="2"><span class="material-symbols-rounded">star</span> 2 Stars</li>
+              <li data-value="1"><span class="material-symbols-rounded">star</span> 1 Star</li>
             </ul>
           </div>
           <div class="custom-dropdown" id="dd-num" data-value="150">
             <button class="dropdown-pill" type="button">
+              <span class="material-symbols-rounded pill-icon">format_list_numbered</span>
               <span class="pill-label">150 reviews</span>
-              <span class="pill-arrow">▾</span>
+              <span class="material-symbols-rounded pill-arrow">expand_more</span>
             </button>
             <ul class="dropdown-menu">
               <li data-value="50">50 reviews</li>
@@ -95,7 +102,7 @@
             </ul>
           </div>
           <button class="btn btn-load-more" id="load-more-btn" style="display:none;">
-            <span class="btn-icon">📥</span> Load More
+            <span class="material-symbols-rounded btn-icon">refresh</span> Load More
           </button>
         </div>
 
@@ -115,13 +122,13 @@
         <!-- Action Buttons -->
         <div class="action-bar">
           <button class="btn btn-primary" id="analyze-btn">
-            <span class="btn-icon">🔍</span> Analyze Reviews
+            <span class="material-symbols-rounded btn-icon">search</span> Analyze Reviews
           </button>
           <button class="btn btn-secondary" id="sample-btn">
-            <span class="btn-icon">📋</span> Load Sample Data
+            <span class="material-symbols-rounded btn-icon">content_paste</span> Load Sample Data
           </button>
           <button class="btn btn-secondary" id="clear-btn">
-            <span class="btn-icon">🗑️</span> Clear
+            <span class="material-symbols-rounded btn-icon">delete</span> Clear
           </button>
         </div>
       </div>
@@ -129,7 +136,7 @@
 
     <!-- ─── Empty State ─────────────────────────────── -->
     <div class="empty-state" id="empty-state">
-      <div class="empty-icon">🔎</div>
+      <div class="empty-icon"><span class="material-symbols-rounded" style="font-size:3rem">search_insights</span></div>
       <p>Paste reviews above and click <strong>Analyze</strong> to uncover insights</p>
     </div>
 
@@ -159,10 +166,10 @@
       <!-- Tabs -->
       <div class="tabs-bar">
         <button class="tab-btn active" data-tab="problems">
-          <span class="tab-icon">🔍</span> Problems & Patterns
+          <span class="material-symbols-rounded tab-icon">bug_report</span> Problems & Patterns
         </button>
         <button class="tab-btn" data-tab="sentiment">
-          <span class="tab-icon">💭</span> Sentiment Analysis
+          <span class="material-symbols-rounded tab-icon">sentiment_satisfied</span> Sentiment Analysis
         </button>
       </div>
 
@@ -173,7 +180,7 @@
 
           <div class="problems-chart-section">
             <div class="chart-card">
-              <h3>📊 Problem Category Distribution</h3>
+              <h3><span class="material-symbols-rounded">bar_chart</span> Problem Category Distribution</h3>
               <div class="chart-wrapper">
                 <canvas id="problems-chart"></canvas>
               </div>
@@ -193,27 +200,27 @@
               <div class="avg-score" id="avg-score">0</div>
             </div>
             <div class="words-card">
-              <h3>🔤 Most Frequent Sentiment Words</h3>
+              <h3><span class="material-symbols-rounded">text_fields</span> Most Frequent Sentiment Words</h3>
               <div class="word-chips" id="top-words"></div>
             </div>
           </div>
 
           <div class="chart-card">
-            <h3>🍩 Sentiment Breakdown</h3>
+            <h3><span class="material-symbols-rounded">donut_large</span> Sentiment Breakdown</h3>
             <div class="chart-wrapper">
               <canvas id="sentiment-chart"></canvas>
             </div>
           </div>
 
           <div class="chart-card" style="grid-column: 1 / -1;">
-            <h3>📈 Score Distribution</h3>
+            <h3><span class="material-symbols-rounded">trending_up</span> Score Distribution</h3>
             <div class="chart-wrapper" style="height:260px;">
               <canvas id="distribution-chart"></canvas>
             </div>
           </div>
 
           <div class="review-table-card">
-            <h3>📝 All Reviews — Scored</h3>
+            <h3><span class="material-symbols-rounded">reviews</span> All Reviews — Scored</h3>
             <table class="review-table">
               <thead>
                 <tr>
